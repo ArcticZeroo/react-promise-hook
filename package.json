@@ -1,5 +1,6 @@
 {
   "name": "@arcticzeroo/react-promise-hook",
+  "private": false,
   "version": "1.0.0",
   "description": "Promise hooks for react",
   "main": "index.js",

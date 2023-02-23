@@ -18,14 +18,13 @@ export interface IRunnablePromiseState<T> extends IPromiseState<T> {
 }
 
 /**
- * React has no mechanism yet (until suspense) to synchronously retrieve promise state in an application,
- * so boilerplate code often gets copy/pasted. This method aims to reduce the boilerplate.
+ * Use a promise for state, which is immediately run each time the callback changes.
  * @param returnsPromise - A function which returns the promise for which you want to get the state of. You MUST
  *  wrap this callback in a useCallback unless you know it is already wrapped. If you do not wrap this callback,
  *  you are most likely going to see an infinite loop of calls.
  * @returns an object containing the current state of the promise, and a synchronous run method
  */
-export const usePromiseState = <T>(returnsPromise: () => Promise<T>): IRunnablePromiseState<T> => {
+export const useImmediatePromiseState = <T>(returnsPromise: () => Promise<T>): IRunnablePromiseState<T> => {
 	const [value, setValue] = useState<T | undefined>();
 	const [error, setError] = useState<any>();
 	const [stage, setStage] = useState(PromiseStage.notRun);
@@ -93,12 +92,13 @@ export const useExistingPromiseState = <T>(promise: Promise<T>): IPromiseState<T
 };
 
 /**
- * Similar to usePromiseState, but is resilient to multiple calls at once - only the most recently run promise will
- * win the battle and show up as persistent state.
+ * Differs from useImmediatePromiseState in two ways:
+ * - The returnsPromise function is not immediately called - it must be called by you
+ * - It is resilient to multiple calls at once
  * @param returnsPromise
  * @param keepLastValue - Whether to keep the last value returned by a promise. This can be useful to avoid flashing.
  */
-export const useLatestPromiseState = <T>(returnsPromise: () => Promise<T>, keepLastValue: boolean = true): IRunnablePromiseState<T> => {
+export const useDelayedPromiseState = <T>(returnsPromise: () => Promise<T>, keepLastValue: boolean = true): IRunnablePromiseState<T> => {
 	const [value, setValue] = useState<T | undefined>();
 	const [error, setError] = useState<any>();
 	const [stage, setStage] = useState(PromiseStage.notRun);
@@ -110,8 +110,9 @@ export const useLatestPromiseState = <T>(returnsPromise: () => Promise<T>, keepL
 		}
 		setError(undefined);
 
-		// If we've never run before, we can set to running in order to show a first-time loading spinner
-		if (currentSymbol.current == null) {
+		// If we've never run before (or we don't want to keep the last value),
+		// we can set to running in order to show a first-time loading spinner
+		if (!keepLastValue || currentSymbol.current == null) {
 			setStage(PromiseStage.running);
 		}
 
