@@ -1,0 +1,30 @@
+{
+  "name": "@arcticzeroo/react-promise-hook",
+  "version": "1.0.0",
+  "description": "Promise hooks for react",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arcticzeroo/react-promise-hook.git"
+  },
+  "keywords": [
+    "react",
+    "promise",
+    "hook"
+  ],
+  "author": "spencer@frozor.io",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/arcticzeroo/react-promise-hook/issues"
+  },
+  "homepage": "https://github.com/arcticzeroo/react-promise-hook#readme",
+  "peerDependencies": {
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5"
+  }
+}

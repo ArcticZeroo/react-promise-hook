@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "target": "es2022",
+    "sourceMap": false,
+    "lib": [
+      "ES2020"
+    ],
+    "moduleResolution": "node",
+    "declaration": true
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}
