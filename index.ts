@@ -14,7 +14,11 @@ export interface IPromiseState<T> {
 }
 
 export interface IRunnablePromiseState<T> extends IPromiseState<T> {
-	run: () => void
+	run: () => void,
+}
+
+export interface IDelayedPromiseState<T> extends IRunnablePromiseState<T> {
+	actualStage: PromiseStage,
 }
 
 /**
@@ -92,16 +96,18 @@ export const useExistingPromiseState = <T>(promise: Promise<T>): IPromiseState<T
 };
 
 /**
- * Differs from useImmediatePromiseState in two ways:
+ * Differs from useImmediatePromiseState in three ways:
  * - The returnsPromise function is not immediately called - it must be called by you
  * - It is resilient to multiple calls at once
+ *
  * @param returnsPromise
  * @param keepLastValue - Whether to keep the last value returned by a promise. This can be useful to avoid flashing.
  */
-export const useDelayedPromiseState = <T>(returnsPromise: () => Promise<T>, keepLastValue: boolean = true): IRunnablePromiseState<T> => {
+export const useDelayedPromiseState = <T>(returnsPromise: () => Promise<T>, keepLastValue: boolean = true): IDelayedPromiseState<T> => {
 	const [value, setValue] = useState<T | undefined>();
 	const [error, setError] = useState<any>();
-	const [stage, setStage] = useState(PromiseStage.notRun);
+	const [actualStage, setActualStage] = useState(PromiseStage.notRun);
+	const [lastCompletedStage, setLastCompletedStage] = useState<PromiseStage | undefined>(undefined);
 	const currentSymbol = useRef<symbol | null>(null);
 
 	const run = useCallback(() => {
@@ -113,8 +119,10 @@ export const useDelayedPromiseState = <T>(returnsPromise: () => Promise<T>, keep
 		// If we've never run before (or we don't want to keep the last value),
 		// we can set to running in order to show a first-time loading spinner
 		if (!keepLastValue || currentSymbol.current == null) {
-			setStage(PromiseStage.running);
+			setLastCompletedStage(PromiseStage.running);
 		}
+
+		setActualStage(PromiseStage.running);
 
 		const thisRunSymbol = Symbol();
 		currentSymbol.current = thisRunSymbol;
@@ -122,14 +130,16 @@ export const useDelayedPromiseState = <T>(returnsPromise: () => Promise<T>, keep
 		returnsPromise()
 			.then(result => {
 				if (currentSymbol.current === thisRunSymbol) {
-					setStage(PromiseStage.success);
+					setActualStage(PromiseStage.success);
+					setLastCompletedStage(PromiseStage.success);
 					setValue(result);
 				}
 				return result;
 			})
 			.catch(err => {
 				if (currentSymbol.current === thisRunSymbol) {
-					setStage(PromiseStage.error);
+					setActualStage(PromiseStage.error);
+					setLastCompletedStage(PromiseStage.error);
 					setValue(undefined);
 					setError(err);
 				}
@@ -140,7 +150,8 @@ export const useDelayedPromiseState = <T>(returnsPromise: () => Promise<T>, keep
 	return {
 		value,
 		error,
-		stage,
-		run
+		run,
+		actualStage,
+		stage: lastCompletedStage ?? actualStage,
 	};
 };
